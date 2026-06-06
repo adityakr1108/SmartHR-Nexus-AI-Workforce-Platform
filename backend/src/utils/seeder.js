@@ -5,6 +5,10 @@
  */
 
 require('dotenv').config();
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 const mongoose = require('mongoose');
 
 // ─── Models ──────────────────────────────────────────────────────────────────

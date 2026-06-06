@@ -37,6 +37,12 @@
 
   /* Selection */
   ::selection { background: rgba(99,102,241,0.3); color: #f1f5f9; }
+
+  /* Option dropdowns styling for visibility */
+  select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
+  }
 }
 
 @layer components {

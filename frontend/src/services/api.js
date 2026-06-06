@@ -92,6 +92,11 @@ export const employeeAPI = {
   },
 };
 
+export const departmentAPI = {
+  getAll: () => api.get('/departments'),
+};
+
+
 export const attendanceAPI = {
   checkIn: (data) => api.post('/attendance/checkin', data),
   checkOut: (data) => api.post('/attendance/checkout', data),

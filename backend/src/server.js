@@ -1,3 +1,7 @@
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -145,3 +149,5 @@ process.on('SIGTERM', async () => {
 });
 
 module.exports = { app, server, io };
+
+

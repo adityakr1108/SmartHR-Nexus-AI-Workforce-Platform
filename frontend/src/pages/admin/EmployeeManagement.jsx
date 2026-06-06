@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Search, Filter, Download, Upload, MoreVertical, Edit, Trash2, Eye, UserCheck } from 'lucide-react';
-import { employeeAPI } from '@/services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Search, Filter, Download, Upload, MoreVertical, Edit, Trash2, Eye, UserCheck, X } from 'lucide-react';
+import { employeeAPI, departmentAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 
@@ -32,6 +32,60 @@ export default function EmployeeManagement() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const limit = 12;
 
+  const [departments, setDepartments] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'employee',
+    department: '',
+    position: '',
+    phone: '',
+    dateOfJoining: new Date().toISOString().split('T')[0],
+    salaryBasic: 0,
+    salaryAllowances: 0,
+    password: '',
+  });
+
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const { data } = await departmentAPI.getAll();
+      setDepartments(data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDepartments();
+  }, [fetchDepartments]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      role: 'employee',
+      department: '',
+      position: '',
+      phone: '',
+      dateOfJoining: new Date().toISOString().split('T')[0],
+      salaryBasic: 0,
+      salaryAllowances: 0,
+      password: '',
+    });
+  };
+
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
@@ -57,6 +111,52 @@ export default function EmployeeManagement() {
       fetchEmployees();
     } catch {
       toast.error('Failed to deactivate employee');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.role || !formData.department) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        role: formData.role,
+        department: formData.department,
+        position: formData.position.trim(),
+        phone: formData.phone.trim(),
+        dateOfJoining: formData.dateOfJoining,
+        salary: {
+          basic: Number(formData.salaryBasic || 0),
+          allowances: Number(formData.salaryAllowances || 0),
+          currency: 'USD',
+        },
+      };
+
+      if (formData.password.trim()) {
+        payload.password = formData.password.trim();
+      }
+
+      const { data } = await employeeAPI.create(payload);
+      if (data.success) {
+        toast.success(data.message || 'Employee created successfully');
+        handleCloseModal();
+        fetchEmployees();
+      } else {
+        toast.error(data.message || 'Failed to create employee');
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      const errMsg = error.response?.data?.message || 'Failed to create employee';
+      toast.error(errMsg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -233,6 +333,210 @@ export default function EmployeeManagement() {
           </div>
         )}
       </motion.div>
+
+      {/* Add Employee Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-surface-900 border border-white/10 rounded-2xl w-full max-w-2xl p-6 shadow-glow-primary overflow-hidden relative"
+            >
+              {/* Close Button */}
+              <button
+                onClick={handleCloseModal}
+                className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors"
+                type="button"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h3 className="font-display text-xl font-bold text-white mb-4">Add New Employee</h3>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* First Name */}
+                  <div>
+                    <label className="input-label">First Name *</label>
+                    <input
+                      required
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="e.g. Emma"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Last Name */}
+                  <div>
+                    <label className="input-label">Last Name *</label>
+                    <input
+                      required
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="e.g. Wilson"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="input-label">Email Address *</label>
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="e.g. emma@company.com"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="input-label">Phone Number</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="e.g. +1 (555) 0199"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Department */}
+                  <div>
+                    <label className="input-label">Department *</label>
+                    <select
+                      required
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      className="input-field"
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option key={dept._id} value={dept._id}>
+                          {dept.name} ({dept.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Role */}
+                  <div>
+                    <label className="input-label">System Role *</label>
+                    <select
+                      required
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      className="input-field"
+                    >
+                      {Object.entries(ROLE_LABELS).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Position */}
+                  <div>
+                    <label className="input-label">Position / Job Title</label>
+                    <input
+                      type="text"
+                      name="position"
+                      value={formData.position}
+                      onChange={handleChange}
+                      placeholder="e.g. Senior Software Engineer"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Date of Joining */}
+                  <div>
+                    <label className="input-label">Date of Joining</label>
+                    <input
+                      type="date"
+                      name="dateOfJoining"
+                      value={formData.dateOfJoining}
+                      onChange={handleChange}
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Basic Salary */}
+                  <div>
+                    <label className="input-label">Basic Salary (USD/month)</label>
+                    <input
+                      type="number"
+                      name="salaryBasic"
+                      value={formData.salaryBasic}
+                      onChange={handleChange}
+                      min="0"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Salary Allowances */}
+                  <div>
+                    <label className="input-label">Allowances (USD/month)</label>
+                    <input
+                      type="number"
+                      name="salaryAllowances"
+                      value={formData.salaryAllowances}
+                      onChange={handleChange}
+                      min="0"
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Custom Password */}
+                  <div className="md:col-span-2">
+                    <label className="input-label">Password (Optional - defaults to SmartHR@2024)</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Leave blank for default password"
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="btn-secondary"
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Creating...' : 'Register Employee'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

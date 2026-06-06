@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Star, Mail, Phone, Briefcase, ChevronRight, TrendingUp, Filter } from 'lucide-react';
+import { Bot, Star, Mail, Phone, Briefcase, ChevronRight, ChevronDown, TrendingUp, Filter } from 'lucide-react';
 import { recruitmentAPI } from '@/services/api';
 import clsx from 'clsx';
 
@@ -43,6 +43,7 @@ export default function ApplicationPipeline() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
 
   useEffect(() => {
     recruitmentAPI.getApplications()
@@ -163,17 +164,55 @@ export default function ApplicationPipeline() {
                       </div>
 
                       {/* Move controls */}
-                      <div className="mt-2.5 flex gap-1" onClick={(e) => e.stopPropagation()}>
-                        <select
-                          value={app.stage}
-                          onChange={(e) => handleStageChange(app._id, e.target.value)}
-                          className="flex-1 bg-surface-700 border border-white/10 text-slate-300 text-[10px] rounded-lg px-2 py-1.5
-                                     focus:outline-none focus:border-primary-500/50"
-                        >
-                          {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-                        </select>
+                      <div className="mt-2.5 flex gap-1 items-center relative" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative flex-1">
+                          <button
+                            onClick={() => setActiveDropdownId(activeDropdownId === app._id ? null : app._id)}
+                            className="w-full flex items-center justify-between bg-surface-800/90 border border-white/10 hover:border-white/20 text-slate-200 text-[10px] rounded-lg px-2 py-1.5 transition-all focus:outline-none focus:ring-1 focus:ring-primary-500/50"
+                          >
+                            <span className="flex items-center gap-1.5 truncate">
+                              <span className={clsx("w-1.5 h-1.5 rounded-full", STAGES.find(s => s.id === app.stage)?.color.replace('border-', 'bg-'))} />
+                              {STAGES.find(s => s.id === app.stage)?.label}
+                            </span>
+                            <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+                          </button>
+                          
+                          <AnimatePresence>
+                            {activeDropdownId === app._id && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setActiveDropdownId(null)} />
+                                <motion.div
+                                  initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                                  transition={{ duration: 0.1 }}
+                                  className="absolute left-0 right-0 bottom-full mb-1.5 z-20 bg-surface-900 border border-white/10 rounded-lg shadow-xl overflow-hidden py-1 max-h-40 overflow-y-auto no-scrollbar"
+                                >
+                                  {STAGES.map((s) => (
+                                    <button
+                                      key={s.id}
+                                      onClick={() => {
+                                        handleStageChange(app._id, s.id);
+                                        setActiveDropdownId(null);
+                                      }}
+                                      className={clsx(
+                                        "w-full text-left px-2.5 py-1.5 text-[10px] transition-colors flex items-center gap-2",
+                                        app.stage === s.id 
+                                          ? "bg-primary-600/30 text-primary-400 font-semibold" 
+                                          : "text-slate-300 hover:bg-white/5"
+                                      )}
+                                    >
+                                      <span className={clsx("w-1.5 h-1.5 rounded-full", s.color.replace('border-', 'bg-'))} />
+                                      {s.label}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
                         <button
-                          className="btn-ghost p-1.5"
+                          className="btn-ghost p-1.5 flex-shrink-0"
                           onClick={() => setSelected(app)}
                           title="View details"
                         >
