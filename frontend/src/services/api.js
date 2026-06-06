@@ -146,4 +146,11 @@ export const dashboardAPI = {
   getEmployeeStats: () => api.get('/dashboard/employee'),
 };
 
+export const leaveAPI = {
+  getAll: (params) => api.get('/leaves', { params }),
+  create: (data) => api.post('/leaves', data),
+  approve: (id, data) => api.patch(`/leaves/${id}/approve`, data),
+  reject: (id, data) => api.patch(`/leaves/${id}/reject`, data),
+};
+
 export default api;

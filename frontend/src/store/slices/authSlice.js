@@ -91,12 +91,17 @@ export const loginUser = createAsyncThunk('auth/login', async (credentials, { re
 });
 
 export const logoutUser = createAsyncThunk('auth/logout', async () => {
-  const isDemo = localStorage.getItem('accessToken') === DEMO_TOKEN;
+  const token = localStorage.getItem('accessToken');
+  const isDemo = token === DEMO_TOKEN;
+  if (!isDemo && token) {
+    try {
+      await api.post('/auth/logout', {}, { timeout: 3000 });
+    } catch (err) {
+      console.warn('Logout API call failed or timed out:', err.message);
+    }
+  }
   localStorage.removeItem('accessToken');
   localStorage.removeItem('demoUser');
-  if (!isDemo) {
-    try { await api.post('/auth/logout'); } catch {}
-  }
 });
 
 export const fetchCurrentUser = createAsyncThunk('auth/me', async (_, { rejectWithValue }) => {
