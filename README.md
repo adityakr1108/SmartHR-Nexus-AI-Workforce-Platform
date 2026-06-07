@@ -19,11 +19,20 @@ The platform is architected with React 18, Node.js, Express, MongoDB (Mongoose),
 
 ## 📸 Screenshots
 
-### Admin Dashboard View
+### 🖥️ Admin Dashboard View
 ![Admin Dashboard](./screenshots/admin_dashboard.png)
 
-### Manager Leave Approvals View
+### 🧑‍💻 Employee Dashboard View
+![Employee Dashboard](./screenshots/employee_dashboard.png)
+
+### 📅 Manager Leave Approvals View
 ![Manager Leave Approvals](./screenshots/manager_leaves.png)
+
+### 🎯 HR Recruiter Candidate Pipeline View
+![Candidate Pipeline](./screenshots/candidate_pipeline.png)
+
+### 💬 ARIA — Floating AI HR Assistant View
+![ARIA AI Assistant](./screenshots/aria_assistant.png)
 
 ---
 
